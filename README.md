@@ -6,3 +6,5 @@ ouvrir le projet sur le localhost:8000
 Dans xamp, php.ini => décommenter les lignes :
 extension=pdo_pgsql
 extension=pgsql
+
+créer fichier .env.local pour les données de connexion
