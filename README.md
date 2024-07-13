@@ -11,3 +11,7 @@ créer fichier .env.local pour les données de connexion (DATABASEURL)
 
 test pour vérifier la connexion à la BD :
 symfony console doctrine:database:create --if-not-exists
+
+# symfony console cache:clear
+
+vider le cache
