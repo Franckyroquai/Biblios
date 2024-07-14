@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class RegistrationController extends AbstractController
 {
-    #[Route('/register', name: 'app_register')]
+    #[Route('/admin/user/new', name: 'app_register')]
     public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager): Response
     {
         $user = new User();
@@ -37,7 +37,7 @@ class RegistrationController extends AbstractController
             return $this->redirectToRoute('app_main');
         }
 
-        return $this->render('registration/register.html.twig', [
+        return $this->render('admin/user/new.html.twig', [
             'registrationForm' => $form,
         ]);
     }
