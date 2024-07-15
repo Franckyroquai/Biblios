@@ -32,15 +32,16 @@ class Book
     #[ORM\Column(length: 255)]
     private ?string $cover = null;
 
-    #[ORM\Column(nullable: true)]
+    #[Assert\NotBlank()]
+    #[ORM\Column]
     private ?\DateTimeImmutable $editedAt = null;
 
     #[Assert\Length(min: 20)]
+    #[Assert\NotBlank()]
     #[ORM\Column(type: Types::TEXT)]
     private ?string $plot = null;
 
     #[Assert\Type(type: 'integer')]
-    #[Assert\GreaterThan(0)]
     #[ORM\Column]
     private ?int $pageNumber = null;
 
@@ -51,22 +52,20 @@ class Book
     #[ORM\JoinColumn(nullable: false)]
     private ?Editor $editor = null;
 
-    /**
-     * @var Collection<int, Author>
-     */
-    #[ORM\ManyToMany(targetEntity: Author::class, mappedBy: 'books')]
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'book', orphanRemoval: true)]
+    private Collection $comments;
+
+    #[ORM\ManyToMany(targetEntity: Author::class, mappedBy: 'books', cascade: ['persist'])]
     private Collection $authors;
 
-    /**
-     * @var Collection<int, Comment>
-     */
-    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'book', orphanRemoval: true)]
-    private Collection $comment;
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $createdBy = null;
 
     public function __construct()
     {
+        $this->comments = new ArrayCollection();
         $this->authors = new ArrayCollection();
-        $this->comment = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -115,7 +114,7 @@ class Book
         return $this->editedAt;
     }
 
-    public function setEditedAt(?\DateTimeImmutable $editedAt): static
+    public function setEditedAt(\DateTimeImmutable $editedAt): static
     {
         $this->editedAt = $editedAt;
 
@@ -171,6 +170,36 @@ class Book
     }
 
     /**
+     * @return Collection<int, Comment>
+     */
+    public function getComments(): Collection
+    {
+        return $this->comments;
+    }
+
+    public function addComment(Comment $comment): static
+    {
+        if (!$this->comments->contains($comment)) {
+            $this->comments->add($comment);
+            $comment->setBook($this);
+        }
+
+        return $this;
+    }
+
+    public function removeComment(Comment $comment): static
+    {
+        if ($this->comments->removeElement($comment)) {
+            // set the owning side to null (unless already changed)
+            if ($comment->getBook() === $this) {
+                $comment->setBook(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * @return Collection<int, Author>
      */
     public function getAuthors(): Collection
@@ -197,32 +226,14 @@ class Book
         return $this;
     }
 
-    /**
-     * @return Collection<int, Comment>
-     */
-    public function getComment(): Collection
+    public function getCreatedBy(): ?User
     {
-        return $this->comment;
+        return $this->createdBy;
     }
 
-    public function addComment(Comment $comment): static
+    public function setCreatedBy(?User $createdBy): static
     {
-        if (!$this->comment->contains($comment)) {
-            $this->comment->add($comment);
-            $comment->setBook($this);
-        }
-
-        return $this;
-    }
-
-    public function removeComment(Comment $comment): static
-    {
-        if ($this->comment->removeElement($comment)) {
-            // set the owning side to null (unless already changed)
-            if ($comment->getBook() === $this) {
-                $comment->setBook(null);
-            }
-        }
+        $this->createdBy = $createdBy;
 
         return $this;
     }
