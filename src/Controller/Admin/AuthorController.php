@@ -2,73 +2,73 @@
 
 namespace App\Controller\Admin;
 
-use App\Entity\Book;
-use App\Entity\User;
-use App\Form\BookType;
-use App\Repository\BookRepository;
+use App\Entity\Author;
+use App\Form\AuthorType;
+use App\Repository\AuthorRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Pagerfanta\Doctrine\ORM\QueryAdapter;
 use Pagerfanta\Pagerfanta;
-use phpDocumentor\Reflection\DocBlock\Tags\Method;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/admin/book')]
-class BookController extends AbstractController
+#[Route('/admin/author')]
+class AuthorController extends AbstractController
 {
-    #[Route('', name: 'app_admin_book_index', methods: ['GET'])]
-    public function index(Request $request, BookRepository $repository): Response
+    #[Route('', name: 'app_admin_author_index', methods: ['GET'])]
+    public function index(Request $request, AuthorRepository $repository): Response
     {
-        $books = Pagerfanta::createForCurrentPageWithMaxPerPage(
-            new QueryAdapter($repository->createQueryBuilder('b')),
+        $dates = [];
+        if ($request->query->has('start')) {
+            $dates['start'] = $request->query->get('start');
+        }
+        if ($request->query->has('end')) {
+            $dates['end'] = $request->query->get('end');
+        }
+
+        $authors = Pagerfanta::createForCurrentPageWithMaxPerPage(
+            new QueryAdapter($repository->findByDateOfBirth()),
             $request->query->get('page', 1),
-            20
+            10
         );
 
-        return $this->render('admin/book/index.html.twig', [
-            'books' => $books,
+        return $this->render('admin/author/index.html.twig', [
+            'authors' => $authors,
         ]);
     }
 
     #[IsGranted('ROLE_AJOUT_DE_LIVRE')]
-    #[Route('/new', name: 'app_admin_book_new', methods: ['GET', 'POST'])]
-    #[Route('/{id}/edit', name: 'app_admin_book_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
-    public function new(?Book $book, Request $request, EntityManagerInterface $manager): Response
+    #[Route('/new', name: 'app_admin_author_new', methods: ['GET', 'POST'])]
+    #[Route('/{id}/edit', name: 'app_admin_author_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    public function new(?Author $author, Request $request, EntityManagerInterface $manager): Response
     {
-        if ($book) {
+        if ($author) {
             $this->denyAccessUnlessGranted('ROLE_EDITION_DE_LIVRE');
         }
 
-        $book ??= new Book();
-        $form = $this->createForm(BookType::class, $book);
+        $author ??= new Author();
+        $form = $this->createForm(AuthorType::class, $author);
 
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-
-            $user = $this->getUser();
-            if (!$book->getId() && $user instanceof User) {
-                $book->setCreatedBy($user);
-            }
-
-            $manager->persist($book);
+            $manager->persist($author);
             $manager->flush();
 
-            return $this->redirectToRoute('app_admin_book_index');
+            return $this->redirectToRoute('app_admin_author_index');
         }
 
-        return $this->render('admin/book/new.html.twig', [
+        return $this->render('admin/author/new.html.twig', [
             'form' => $form,
         ]);
     }
 
-    #[Route('/{id}', name: 'app_admin_book_show', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function show(?Book $book): Response
+    #[Route('/{id}', name: 'app_admin_author_show', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function show(?Author $author): Response
     {
-        return $this->render('admin/book/show.html.twig', [
-            'book' => $book,
+        return $this->render('admin/author/show.html.twig', [
+            'author' => $author,
         ]);
     }
 }
